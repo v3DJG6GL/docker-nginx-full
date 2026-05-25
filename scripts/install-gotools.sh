@@ -3,7 +3,6 @@ set -e
 
 BLUE='\E[1;34m'
 CYAN='\E[1;36m'
-YELLOW='\E[1;33m'
 GREEN='\E[1;32m'
 RESET='\E[0m'
 

@@ -34,15 +34,9 @@ ENV PATH="/opt/certbot/bin:$PATH"
 
 RUN curl -L 'https://bootstrap.pypa.io/get-pip.py' | python3
 
-RUN pip install --no-cache-dir --upgrade pyopenssl \
-	&& pip install --no-cache-dir cffi certbot cryptography \
+RUN pip install --no-cache-dir --upgrade pyopenssl==24.3.0 \
+	&& pip install --no-cache-dir cffi certbot=>5.6.0 cryptography==48.0.0 \
 	&& pip install tldextract zope pip-system-certs
-
-# acme 5.x references crypto.X509Extension which was removed in pyOpenSSL 24+.
-# Wrap it as a string annotation (lazy eval) so Python never evaluates it eagerly.
-RUN find /opt/certbot -path "*/acme/crypto_util.py" \
-	-exec sed -i 's/Optional\[List\[crypto\.X509Extension\]\]/"Optional[List[crypto.X509Extension]]"/g' {} \; \
-	&& /opt/certbot/bin/python3 -m compileall -q "$(find /opt/certbot -path "*/site-packages/acme" -type d)"
 
 #############
 # Final Image
