@@ -15,7 +15,7 @@ pipeline {
 		IMAGE               = 'nginx-full'
 		BUILDX_NAME         = "${IMAGE}_${GIT_BRANCH}"
 		BRANCH_LOWER        = "${BRANCH_NAME.toLowerCase().replaceAll('/', '-')}"
-		OPENRESTY_VERSION   = '1.29.2.4'
+		OPENRESTY_VERSION   = '1.29.2.5'
 		LUA_VERSION         = '5.5.0'
 		LUAROCKS_VERSION    = '3.13.0'
 	}
