@@ -25,8 +25,8 @@ echo -e "${BLUE}❯ ${CYAN}Building Luarocks ${YELLOW}${LUAROCKS_VERSION}...${RE
 
 cd /tmp
 wget "http://luarocks.github.io/luarocks/releases/luarocks-${LUAROCKS_VERSION}.tar.gz"
-tar -xzf luarocks-${LUAROCKS_VERSION}.tar.gz
-mv /tmp/luarocks-${LUAROCKS_VERSION} /tmp/luarocks
+tar -xzf "luarocks-${LUAROCKS_VERSION}.tar.gz"
+mv "/tmp/luarocks-${LUAROCKS_VERSION}" /tmp/luarocks
 cd /tmp/luarocks
 
 ./configure

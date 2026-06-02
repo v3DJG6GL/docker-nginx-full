@@ -16,7 +16,7 @@ pipeline {
 		BUILDX_NAME         = "${IMAGE}_${GIT_BRANCH}"
 		BRANCH_LOWER        = "${BRANCH_NAME.toLowerCase().replaceAll('/', '-')}"
 		OPENRESTY_VERSION   = '1.29.2.5'
-		LUA_VERSION         = '5.5.0'
+		LUA_VERSION         = '5.1.5'
 		LUAROCKS_VERSION    = '3.13.0'
 	}
 	stages {
@@ -68,6 +68,7 @@ pipeline {
 					sh 'docker login -u "${DOCKER_USER}" -p "${DOCKER_PASS}"'
 					sh "./scripts/buildx.sh --push -f docker/Dockerfile ${BUILDX_PUSH_TAGS}"
 				}
+				sh 'scripts/ci/test.sh "${BASE_IMAGE}"'
 			}
 		}
 		stage('Acme Clients') {
@@ -80,6 +81,8 @@ pipeline {
 					sh "./scripts/buildx.sh --push -f docker/Dockerfile.acmesh ${BUILDX_PUSH_TAGS_ACMESH}"
 					sh "./scripts/buildx.sh --push -f docker/Dockerfile.certbot ${BUILDX_PUSH_TAGS_CERTBOT}"
 				}
+				sh 'scripts/ci/test.sh "${BASE_IMAGE}-acmesh"'
+				sh 'scripts/ci/test.sh "${BASE_IMAGE}-certbot"'
 			}
 		}
 		stage('Dev Tools') {
@@ -92,6 +95,8 @@ pipeline {
 					sh "./scripts/buildx.sh --push -f docker/Dockerfile.acmesh-golang ${BUILDX_PUSH_TAGS_ACMESH_GOLANG}"
 					sh "./scripts/buildx.sh --push -f docker/Dockerfile.certbot-node ${BUILDX_PUSH_TAGS_CERTBOT_NODE}"
 				}
+				sh 'scripts/ci/test.sh "${BASE_IMAGE}-acmesh-golang"'
+				sh 'scripts/ci/test.sh "${BASE_IMAGE}-certbot-node"'
 			}
 		}
 		stage('PR Comment') {
