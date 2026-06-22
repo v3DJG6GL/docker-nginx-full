@@ -110,3 +110,19 @@ jobs:
 
       - name: Inspect result
         run: docker buildx imagetools inspect "$IMAGE:certbot-node"
+
+  # Stable umbrella check for the branch ruleset — runs on PRs too, so a Renovate
+  # OPENRESTY_VERSION bump can't merge unless the image compiled on both arches.
+  # Requiring this single name (not the matrix legs) keeps the rule stable if the
+  # arch matrix changes later.
+  all-ci:
+    needs: [build]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify build succeeded
+        run: |
+          if [ "${{ needs.build.result }}" != "success" ]; then
+            echo "::error::build=${{ needs.build.result }}"
+            exit 1
+          fi
