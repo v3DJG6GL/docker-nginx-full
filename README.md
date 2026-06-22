@@ -1,9 +1,9 @@
 # nginx-full
 
 <p>
-  <img src="https://img.shields.io/badge/openresty-1.29.2.5-green.svg?style=for-the-badge">
+  <img src="https://img.shields.io/badge/dynamic/yaml?style=for-the-badge&label=openresty&color=green&url=https://raw.githubusercontent.com/v3DJG6GL/docker-nginx-full/master/.github/workflows/build.yml&query=$.env.OPENRESTY_VERSION">
   <img src="https://img.shields.io/badge/lua-5.1.5-green.svg?style=for-the-badge">
-  <img src="https://img.shields.io/badge/luarocks-3.13.0-green.svg?style=for-the-badge">
+  <img src="https://img.shields.io/badge/dynamic/yaml?style=for-the-badge&label=luarocks&color=green&url=https://raw.githubusercontent.com/v3DJG6GL/docker-nginx-full/master/.github/workflows/build.yml&query=$.env.LUAROCKS_VERSION">
   <a href="https://hub.docker.com/repository/docker/nginxproxymanager/nginx-full">
     <img src="https://img.shields.io/docker/stars/nginxproxymanager/nginx-full.svg?style=for-the-badge">
   </a>
