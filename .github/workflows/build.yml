@@ -1,0 +1,112 @@
+name: Build & Publish nginx-full
+
+# Builds this fork's nginx-full:certbot-node base image (OpenResty + certbot + node)
+# and publishes it multi-arch to GHCR, for nginx-proxy-manager to use as BASE_IMAGE.
+#
+# OpenResty/Lua/LuaRocks versions live HERE (not in upstream's local-*.sh) so that
+# `git merge upstream/master` never conflicts — we only ADD files, never edit theirs.
+# Renovate (.github/renovate.json) bumps OPENRESTY_VERSION below when OpenResty ships
+# a new tag (e.g. 1.31.2.x), which retriggers this build automatically.
+
+run-name: >-
+  ${{ github.event_name == 'schedule' && 'Publish · weekly refresh' || 'Publish · nginx-full' }}
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - docker/**
+      - scripts/**
+      - files/**
+      - .github/workflows/build.yml
+  pull_request:        # build-only (no push) — validates Renovate's OPENRESTY_VERSION bumps
+  workflow_dispatch:
+  schedule:
+    - cron: '40 5 * * 1'   # weekly: refresh apt layers + geoip2 module (cloned at HEAD)
+
+env:
+  IMAGE: ghcr.io/v3djg6gl/nginx-full          # GHCR requires a lowercase owner
+  OPENRESTY_VERSION: '1.31.1.1'               # nginx 1.31.1 core; Renovate bumps this
+  LUA_VERSION: '5.1.5'
+  LUAROCKS_VERSION: '3.13.0'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    # Build each arch on a NATIVE runner — the certbot layer compiles the Rust
+    # `cryptography` wheel and OpenResty compiles from source; under QEMU that is
+    # punishingly slow, so we avoid emulation entirely and merge manifests after.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Chain the three layers locally (plain docker build resolves `FROM local/...`
+      # from the daemon's image store — no intermediate registry pushes needed).
+      - name: Build base (OpenResty)
+        run: |
+          docker build -t local/nginx-full:latest \
+            --build-arg OPENRESTY_VERSION="$OPENRESTY_VERSION" \
+            --build-arg LUA_VERSION="$LUA_VERSION" \
+            --build-arg LUAROCKS_VERSION="$LUAROCKS_VERSION" \
+            -f docker/Dockerfile .
+
+      - name: Build certbot layer
+        run: |
+          docker build -t local/nginx-full:certbot \
+            --build-arg BASE_IMAGE=local/nginx-full:latest \
+            -f docker/Dockerfile.certbot .
+
+      - name: Build certbot-node layer
+        run: |
+          docker build -t local/nginx-full:certbot-node \
+            --build-arg CERTBOT_IMAGE=local/nginx-full:certbot \
+            -f docker/Dockerfile.certbot-node .
+
+      - name: Push per-arch image
+        if: github.event_name != 'pull_request'
+        run: |
+          docker tag local/nginx-full:certbot-node "$IMAGE:certbot-node-${{ matrix.arch }}"
+          docker push "$IMAGE:certbot-node-${{ matrix.arch }}"
+
+  merge:
+    needs: [build]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create multi-arch manifest
+        run: |
+          docker buildx imagetools create -t "$IMAGE:certbot-node" \
+            "$IMAGE:certbot-node-amd64" \
+            "$IMAGE:certbot-node-arm64"
+
+      - name: Inspect result
+        run: docker buildx imagetools inspect "$IMAGE:certbot-node"
