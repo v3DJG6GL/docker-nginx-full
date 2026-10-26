@@ -26,7 +26,7 @@ on:
 
 env:
   IMAGE: ghcr.io/v3djg6gl/nginx-full          # GHCR requires a lowercase owner
-  OPENRESTY_VERSION: '1.31.1.1'               # nginx 1.31.1 core; Renovate bumps this
+  OPENRESTY_VERSION: '1.31.8.1'               # nginx 1.31.1 core; Renovate bumps this
   LUA_VERSION: '5.1.5'
   LUAROCKS_VERSION: '3.13.0'
 
